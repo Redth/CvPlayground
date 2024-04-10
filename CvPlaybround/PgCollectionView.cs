@@ -6,11 +6,4 @@ public class PgCollectionView : UICollectionView
     {
         
     }
-    
-    
-
-    public override UICollectionViewCell? CellForItem(NSIndexPath indexPath)
-    {
-        return base.CellForItem(indexPath);
-    }
 }

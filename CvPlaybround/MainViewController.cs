@@ -2,102 +2,46 @@ namespace CvPlaybround;
 
 public class MainViewController : UIViewController
 {
-    private PgCollectionView cv;
-    private PgLayout layout;
-    private PgDataSource dataSource;
+    PgCollectionView cv;
+    PgDataSource dataSource;
+    UICollectionViewLayout tableLayout;
+    
+    readonly List<ItemGroup> itemGroups = new ();
     
     public MainViewController() : base()
     {
+        // Generate some test data (a lot of it)
+        var rnd = new Random();
+        for (int i = 1; i <= 20000; i++)
+        {
+            var itemGroup = new ItemGroup($"Group {i}");
+            
+            for (int j = 1; j <= rnd.Next(5, 25); j++)
+            {
+                itemGroup.Add(new Item($"Item {j}"));    
+            }
+            
+            itemGroups.Add(itemGroup);
+        }
+
+        // Create a layout config for list
+        var layoutConfig = new UICollectionLayoutListConfiguration(UICollectionLayoutListAppearance.Plain);
+        layoutConfig.HeaderMode = UICollectionLayoutListHeaderMode.Supplementary;
+        layoutConfig.HeaderTopPadding = 0;
         
-        layout = new PgLayout();
+        // Create the actual layout from our config
+        tableLayout = UICollectionViewCompositionalLayout.GetLayout(layoutConfig);
+
+        // Create the collectionview with our layout
+        cv = new PgCollectionView(this.View!.Frame, tableLayout);
+        
+        // Data source
+        dataSource = new PgDataSource(itemGroups);
     
-        cv = new PgCollectionView(this.View!.Frame, layout);
-        
-        cv.RegisterClassForSupplementaryView(typeof(PgHeader), UICollectionElementKindSectionKey.Header, "HEADER");
-        cv.RegisterClassForCell(typeof(PgCell), "CELL");
-
-        layout.EstimatedItemSize = UICollectionViewFlowLayout.AutomaticSize;
-        layout.ItemSize = UICollectionViewFlowLayout.AutomaticSize;
-        layout.SectionInset = new UIEdgeInsets(0, 0, 0, 0);
-        layout.MinimumInteritemSpacing = 0f;
-        layout.MinimumLineSpacing = 0f;
-        layout.HeaderReferenceSize = UICollectionViewFlowLayout.AutomaticSize;
-        
-        dataSource = new PgDataSource();
-
+        // Assign the data source
         cv.DataSource = dataSource;
-        cv.Delegate = layout;
 
+        // Add our view
         View!.AddSubview(cv);
     }
-
-}
-
-public static class HeightHelper
-{
-    private static Random rnd = new Random();
-    
-    public static nfloat Next()
-    {
-        return rnd.Next(30, 120);
-    }
-}
-
-public static class ColorHelper
-{
-    private static Random rnd = new Random();
-
-    private static Dictionary<string, UIColor> Colors = new Dictionary<string, UIColor>()
-    {
-        { "Red", UIColor.Red },
-        { "Green", UIColor.Green },
-        { "Blue", UIColor.Blue },
-    };
-
-    private static int colorOn = 0;
-
-    public static (string Name, UIColor Color) Next()
-    {
-        var c = Colors.ElementAt(colorOn);
-        colorOn++;
-        if (colorOn > Colors.Count - 1)
-            colorOn = 0;
-        return (c.Key, c.Value);
-    }
-}
-
-public class ItemGroup : List<Item>
-{
-    public ItemGroup(string title) : base()
-    {
-        Height = HeightHelper.Next();
-        // var c = ColorHelper.Next();
-        // Color = c.Color;
-        Color = UIColor.Magenta;
-        
-        GroupTitle = $"{title}, {Height}";
-    }
-    
-    public string GroupTitle { get; set; }
-    
-    public nfloat Height { get; set; }
-    
-    public UIColor Color { get; private set; }
-}
-
-public class Item
-{
-    public Item(string title)
-    {
-        Height = HeightHelper.Next();
-        var c = ColorHelper.Next();
-        Color = c.Color;
-        
-        ItemTitle = $"{title}, {Height}, {c.Name}";
-    }
-    
-    public string ItemTitle { get; set; }
-    
-    public nfloat Height { get; set; }
-    public UIColor Color { get; private set; }
 }

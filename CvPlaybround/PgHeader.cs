@@ -2,56 +2,53 @@ namespace CvPlaybround;
 
 public class PgHeader : UICollectionReusableView
 {
+    UILabel titleLabel;
+    NSLayoutConstraint widthConstraint;
+    NSLayoutConstraint heightConstraint;
+    NSLayoutConstraint topConstraint;
+    
     [Export("initWithFrame:")]
     public PgHeader(CGRect frame) : base(frame)
     {
+        titleLabel = new UILabel();
+        titleLabel.Frame = frame;
+        titleLabel.BackgroundColor = UIColor.Magenta;
         
+        AddSubview(titleLabel);
+        
+        // Seems that autoresizemask isn't as successful here as constraints
+        titleLabel.TranslatesAutoresizingMaskIntoConstraints = false;
+        
+        widthConstraint = titleLabel.WidthAnchor.ConstraintEqualTo(this.WidthAnchor);
+        topConstraint = titleLabel.TopAnchor.ConstraintEqualTo(this.TopAnchor);
+        heightConstraint = titleLabel.BottomAnchor.ConstraintEqualTo(this.BottomAnchor);
+
+        widthConstraint.Active = true;
+        topConstraint.Active = true;
+        heightConstraint.Active = true;
     }
 
     public ItemGroup ItemGroup { get; private set; }
     public void SetItemGroup(ItemGroup itemGroup)
     {
         ItemGroup = itemGroup;
-        if (!SetupView())
-        {
-            //titleLabel!.Frame = new CGRect(this.Frame.X, this.Frame.Y, this.Frame.Width, ItemGroup.Height);
-        }
         titleLabel!.Text = ItemGroup.GroupTitle;
-        titleLabel.BackgroundColor = UIColor.Magenta;
-        SetNeedsDisplay();
     }
-
-    private UILabel? titleLabel;
-
-    bool SetupView()
-    {
-        if (titleLabel is not null)
-            return false;
-
-        this.BackgroundColor = UIColor.Magenta;
-        titleLabel = new UILabel(this.Frame);
-        titleLabel.BackgroundColor = UIColor.Magenta;
-        titleLabel.AutoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight;
-        this.AddSubview(titleLabel);
-        return true;
-    }
-
-    public override CGSize SizeThatFits(CGSize size)
-    {
-        return new CGSize(size.Width, ItemGroup.Height);
-        
-    }
-
+    
     public override UICollectionViewLayoutAttributes PreferredLayoutAttributesFittingAttributes(
         UICollectionViewLayoutAttributes layoutAttributes)
     {
-        // Get the smaller of available space or requested item space
-        var actualHeight = ItemGroup?.Height ?? layoutAttributes.Size.Height; // Math.Min(layoutAttributes.Size.Height, ItemGroup?.Height ?? layoutAttributes.Size.Height);
+        var newLayoutAttributes = base.PreferredLayoutAttributesFittingAttributes(layoutAttributes);
         
-        layoutAttributes.Frame = new CGRect(0, layoutAttributes.Frame.Y, layoutAttributes.Frame.Width, actualHeight);
+        // Resize the frame to the calculated height (for a vertical list)
+        newLayoutAttributes.Frame = new CGRect(
+            newLayoutAttributes.Frame.X,
+            newLayoutAttributes.Frame.Y,
+            newLayoutAttributes.Frame.Width,
+            ItemGroup?.Height ?? layoutAttributes.Size.Height);
     
-        //titleLabel.Frame = layoutAttributes.Frame;
+        newLayoutAttributes.ZIndex = 1;
         
-        return layoutAttributes;
+        return newLayoutAttributes;
     }
 }

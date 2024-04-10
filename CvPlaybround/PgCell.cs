@@ -2,8 +2,33 @@ using CvPlaybround;
 
 internal class PgCell : UICollectionViewCell
 {
+    UILabel titleLabel;
+    NSLayoutConstraint widthConstraint;
+    NSLayoutConstraint heightConstraint;
+    NSLayoutConstraint topConstraint;
+    
     public Item Item { get; private set; }
+    
+    [Export("initWithFrame:")]
+    public PgCell(CGRect frame) : base(frame)
+    {
+        titleLabel = new UILabel();
+        titleLabel.Frame = frame;
+        
+        ContentView.AddSubview(titleLabel);
+        
+        // Seems that autoresizemask isn't as successful here as constraints
+        titleLabel.TranslatesAutoresizingMaskIntoConstraints = false;
+        
+        widthConstraint = titleLabel.WidthAnchor.ConstraintEqualTo(ContentView.WidthAnchor);
+        topConstraint = titleLabel.TopAnchor.ConstraintEqualTo(ContentView.TopAnchor);
+        heightConstraint = titleLabel.BottomAnchor.ConstraintEqualTo(ContentView.BottomAnchor);
 
+        widthConstraint.Active = true;
+        topConstraint.Active = true;
+        heightConstraint.Active = true;
+    }
+    
     public void SetItem(Item item)
     {
         Item = item;
@@ -11,34 +36,18 @@ internal class PgCell : UICollectionViewCell
         titleLabel.BackgroundColor = item.Color;
     }
     
-    [Export("initWithFrame:")]
-    public PgCell(CGRect frame) : base(frame)
-    {
-        titleLabel = new UILabel();
-        titleLabel.Frame = this.ContentView.Frame;
-        titleLabel.AutoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight;
-
-        ContentView.AddSubview(titleLabel);
-    }
-    
-    private UILabel titleLabel;
-    
     public override UICollectionViewLayoutAttributes PreferredLayoutAttributesFittingAttributes(UICollectionViewLayoutAttributes layoutAttributes)
     {
-        // Get the smaller of available space or requested item space
-        var actualHeight = Item?.Height ?? layoutAttributes.Size.Height; // Math.Min(layoutAttributes.Size.Height, Item?.Height ?? layoutAttributes.Size.Height);
-        
-        layoutAttributes.Frame = new CGRect(0, layoutAttributes.Frame.Y, layoutAttributes.Frame.Width, actualHeight);
-        
-        return layoutAttributes;
-    }
+        var newLayoutAttributes = base.PreferredLayoutAttributesFittingAttributes(layoutAttributes);
 
-    
-    // public override void PrepareForReuse()
-    // {
-    //     ContentView.BackgroundColor = UIColor.Clear;
-    //     titleLabel.BackgroundColor = UIColor.Clear;
-    //     
-    //     base.PrepareForReuse();
-    // }
+        newLayoutAttributes.Frame = new CGRect(
+            newLayoutAttributes.Frame.X,
+            newLayoutAttributes.Frame.Y,
+            newLayoutAttributes.Frame.Width,
+            Item?.Height ?? newLayoutAttributes.Size.Height);
+        
+        newLayoutAttributes.ZIndex = 2;
+        
+        return newLayoutAttributes;
+    }
 }

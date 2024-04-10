@@ -1,68 +1,39 @@
-using CvPlaybround;
+namespace CvPlaybround;
 
 public class PgDataSource : UICollectionViewDataSource
 {
-    public PgDataSource() : base()
+    readonly List<ItemGroup> itemGroups;
+    readonly UICollectionViewSupplementaryRegistration headerRegistration;
+    readonly UICollectionViewCellRegistration cellRegistration;
+    
+    public PgDataSource(IEnumerable<ItemGroup> itemGroups) : base()
     {
-        ItemGroups = new List<ItemGroup>();
+        this.itemGroups = new List<ItemGroup>(itemGroups);
+        
+        cellRegistration = UICollectionViewCellRegistration.GetRegistration(typeof(PgCell),
+            (cell, indexPath, item) =>
+                (cell as PgCell)?.SetItem(this.itemGroups[indexPath.Section][indexPath.Row]));
 
-        for (int i = 1; i <= 20000; i++)
-        {
-            var itemGroup = new ItemGroup($"Group {i}");
-            
-            for (int j = 1; j <= 10; j++)
-            {
-                itemGroup.Add(new Item($"Item {j}"));    
-            }
-            
-            ItemGroups.Add(itemGroup);
-        }
+        headerRegistration = UICollectionViewSupplementaryRegistration.GetRegistration(typeof(PgHeader),
+            UICollectionElementKindSectionKey.Header,
+            (view, kind, indexPath) =>
+                (view as PgHeader)?.SetItemGroup(this.itemGroups[indexPath.Section]));
     }
-
-    public readonly List<ItemGroup> ItemGroups;
     
     public override nint NumberOfSections(UICollectionView collectionView)
-    {
-        return ItemGroups.Count;
-    }
+        => itemGroups.Count;
 
     public override nint GetItemsCount(UICollectionView collectionView, nint section)
-    {
-        return new nint(ItemGroups[section.ToInt32()].Count);
-    }
+        => new nint(itemGroups[section.ToInt32()].Count);
     
-    
-
     public override UICollectionReusableView GetViewForSupplementaryElement(UICollectionView collectionView, NSString elementKind,
         NSIndexPath indexPath)
-    {
-        if (elementKind == UICollectionElementKindSectionKey.Header)
-        {
-            var itemGroup = ItemGroups[indexPath.Section];
-            
-            var v = collectionView.DequeueReusableSupplementaryView(elementKind, "HEADER", indexPath);
+        => collectionView.DequeueConfiguredReusableSupplementaryView(headerRegistration, indexPath);
 
-            if (v is PgHeader header)
-            {
-                header.SetItemGroup(itemGroup);
-            }
-
-            return v;
-        }
-        
-        return base.GetViewForSupplementaryElement(collectionView, elementKind, indexPath);
-    }
-    
     public override UICollectionViewCell GetCell(UICollectionView collectionView, NSIndexPath indexPath)
     {
-        var itemGroup = ItemGroups[indexPath.Section];
+        var itemGroup = itemGroups[indexPath.Section];
         var item = itemGroup[indexPath.Row];
-        
-        var v = collectionView.DequeueReusableCell("CELL", indexPath) as PgCell;
-        v.SetItem(item);
-        
-        return v;
+        return collectionView.DequeueConfiguredReusableCell(cellRegistration, indexPath, item);
     }
-    
-    
 }
